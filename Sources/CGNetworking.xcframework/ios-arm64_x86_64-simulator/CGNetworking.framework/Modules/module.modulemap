@@ -1,0 +1,11 @@
+framework module CGNetworking {
+  umbrella header "CGNetworking.h"
+
+  export *
+  module * { export * }
+}
+
+module CGNetworking.Swift {
+    header "CGNetworking-Swift.h"
+    requires objc
+}

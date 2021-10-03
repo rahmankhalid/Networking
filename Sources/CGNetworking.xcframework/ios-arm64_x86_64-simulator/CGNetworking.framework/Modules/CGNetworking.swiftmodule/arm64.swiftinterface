@@ -1,0 +1,202 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.5 (swiftlang-1300.0.31.1 clang-1300.0.29.1)
+// swift-module-flags: -target arm64-apple-ios13.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name CGNetworking
+@_exported import CGNetworking
+import Foundation
+import Swift
+import _Concurrency
+public enum NetworkError : Swift.Error {
+  case error(statusCode: Swift.Int, data: Foundation.Data?)
+  case notConnected
+  case cancelled
+  case generic(Swift.Error)
+  case urlGeneration
+  case serverError(Swift.String)
+  case tokenExpired
+}
+public protocol NetworkErrorLogger {
+  func log(request: Foundation.URLRequest)
+  func log(responseData data: Foundation.Data?, response: Foundation.URLResponse?)
+  func log(error: Swift.Error)
+}
+final public class DefaultNetworkErrorLogger : CGNetworking.NetworkErrorLogger {
+  public init()
+  final public func log(request: Foundation.URLRequest)
+  final public func log(responseData data: Foundation.Data?, response: Foundation.URLResponse?)
+  final public func log(error: Swift.Error)
+  @objc deinit
+}
+public enum DataTransferError : Swift.Error {
+  case noResponse
+  case parsing(Swift.Error)
+  case networkFailure(CGNetworking.NetworkError)
+  case resolvedNetworkFailure(Swift.Error)
+}
+public enum NetworkErrorResponseCodes : Swift.Int {
+  case notConnected
+  case tokenExpired
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@_hasMissingDesignatedInitializers public class NetworkErrorResponse {
+  public static func handleErrorResponse(with error: CGNetworking.DataTransferError) -> Foundation.NSError
+  @objc deinit
+}
+public class Endpoint<R> : CGNetworking.ResponseRequestable {
+  public typealias Response = R
+  final public let path: Swift.String
+  final public let isFullPath: Swift.Bool
+  final public let method: CGNetworking.HTTPMethodType
+  final public let headerParamaters: [Swift.String : Swift.String]
+  final public let queryParametersEncodable: Swift.Encodable?
+  final public let queryParameters: [Swift.String : Any]
+  final public let bodyParamatersEncodable: Swift.Encodable?
+  final public let bodyParamaters: [Swift.String : Any]
+  final public let bodyEncoding: CGNetworking.BodyEncoding
+  final public let responseDecoder: CGNetworking.ResponseDecoder
+  final public let formFields: [Swift.String : Any]
+  final public let imageData: [Swift.String : Foundation.Data]
+  public init(path: Swift.String, isFullPath: Swift.Bool = false, method: CGNetworking.HTTPMethodType, headerParamaters: [Swift.String : Swift.String] = [:], queryParametersEncodable: Swift.Encodable? = nil, queryParameters: [Swift.String : Any] = [:], bodyParamatersEncodable: Swift.Encodable? = nil, bodyParamaters: [Swift.String : Any] = [:], bodyEncoding: CGNetworking.BodyEncoding = .jsonSerializationData, responseDecoder: CGNetworking.ResponseDecoder = JSONResponseDecoder(), formFields: [Swift.String : Any] = [:], imageData: [Swift.String : Foundation.Data] = [:])
+  @objc deinit
+}
+public protocol Requestable {
+  var path: Swift.String { get }
+  var isFullPath: Swift.Bool { get }
+  var method: CGNetworking.HTTPMethodType { get }
+  var headerParamaters: [Swift.String : Swift.String] { get }
+  var queryParametersEncodable: Swift.Encodable? { get }
+  var queryParameters: [Swift.String : Any] { get }
+  var bodyParamatersEncodable: Swift.Encodable? { get }
+  var bodyParamaters: [Swift.String : Any] { get }
+  var bodyEncoding: CGNetworking.BodyEncoding { get }
+  var formFields: [Swift.String : Any] { get }
+  var imageData: [Swift.String : Foundation.Data] { get }
+  func urlRequest(with networkConfig: CGNetworking.NetworkConfigurable) throws -> Foundation.URLRequest
+}
+public enum HTTPMethodType : Swift.String {
+  case get
+  case head
+  case post
+  case put
+  case patch
+  case delete
+  public init?(rawValue: Swift.String)
+  public typealias RawValue = Swift.String
+  public var rawValue: Swift.String {
+    get
+  }
+}
+public enum BodyEncoding {
+  case jsonSerializationData
+  case stringEncodingAscii
+  public static func == (a: CGNetworking.BodyEncoding, b: CGNetworking.BodyEncoding) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public protocol ResponseRequestable : CGNetworking.Requestable {
+  associatedtype Response
+  var responseDecoder: CGNetworking.ResponseDecoder { get }
+}
+extension CGNetworking.Requestable {
+  public func urlRequest(with config: CGNetworking.NetworkConfigurable) throws -> Foundation.URLRequest
+}
+public protocol DataTransferService {
+  typealias CompletionHandler<T> = (Swift.Result<T, CGNetworking.DataTransferError>) -> Swift.Void
+  @discardableResult
+  func request<T, E>(with endpoint: E, completion: @escaping Self.CompletionHandler<T>) -> CGNetworking.NetworkCancellable? where T : Swift.Decodable, T == E.Response, E : CGNetworking.ResponseRequestable
+  @discardableResult
+  func request<E>(with endpoint: E, completion: @escaping Self.CompletionHandler<Swift.Void>) -> CGNetworking.NetworkCancellable? where E : CGNetworking.ResponseRequestable, E.Response == Swift.Void
+  @discardableResult
+  func multipartRequest<T, E>(with endpoint: E, completion: @escaping Self.CompletionHandler<T>) -> CGNetworking.NetworkCancellable? where T : Swift.Decodable, T == E.Response, E : CGNetworking.ResponseRequestable
+}
+public protocol DataTransferErrorResolver {
+  func resolve(error: CGNetworking.NetworkError) -> Swift.Error
+}
+public protocol ResponseDecoder {
+  func decode<T>(_ data: Foundation.Data) throws -> T where T : Swift.Decodable
+}
+public protocol DataTransferErrorLogger {
+  func log(error: Swift.Error)
+}
+final public class DefaultDataTransferService {
+  public init(with networkService: CGNetworking.NetworkService, errorResolver: CGNetworking.DataTransferErrorResolver = DefaultDataTransferErrorResolver(), errorLogger: CGNetworking.DataTransferErrorLogger = DefaultDataTransferErrorLogger())
+  @objc deinit
+}
+extension CGNetworking.DefaultDataTransferService : CGNetworking.DataTransferService {
+  final public func request<T, E>(with endpoint: E, completion: @escaping CGNetworking.DefaultDataTransferService.CompletionHandler<T>) -> CGNetworking.NetworkCancellable? where T : Swift.Decodable, T == E.Response, E : CGNetworking.ResponseRequestable
+  final public func request<E>(with endpoint: E, completion: @escaping CGNetworking.DefaultDataTransferService.CompletionHandler<Swift.Void>) -> CGNetworking.NetworkCancellable? where E : CGNetworking.ResponseRequestable, E.Response == Swift.Void
+  final public func multipartRequest<T, E>(with endpoint: E, completion: @escaping CGNetworking.DefaultDataTransferService.CompletionHandler<T>) -> CGNetworking.NetworkCancellable? where T : Swift.Decodable, T == E.Response, E : CGNetworking.ResponseRequestable
+}
+final public class DefaultDataTransferErrorLogger : CGNetworking.DataTransferErrorLogger {
+  public init()
+  final public func log(error: Swift.Error)
+  @objc deinit
+}
+public class DefaultDataTransferErrorResolver : CGNetworking.DataTransferErrorResolver {
+  public init()
+  public func resolve(error: CGNetworking.NetworkError) -> Swift.Error
+  @objc deinit
+}
+public class JSONResponseDecoder : CGNetworking.ResponseDecoder {
+  public init()
+  public func decode<T>(_ data: Foundation.Data) throws -> T where T : Swift.Decodable
+  @objc deinit
+}
+public class RawDataResponseDecoder : CGNetworking.ResponseDecoder {
+  public init()
+  public func decode<T>(_ data: Foundation.Data) throws -> T where T : Swift.Decodable
+  @objc deinit
+}
+public protocol NetworkConfigurable {
+  var baseURL: Foundation.URL { get }
+  var headers: [Swift.String : Swift.String] { get }
+  var queryParameters: [Swift.String : Swift.String] { get }
+}
+public struct ApiDataNetworkConfig : CGNetworking.NetworkConfigurable {
+  public let baseURL: Foundation.URL
+  public let headers: [Swift.String : Swift.String]
+  public let queryParameters: [Swift.String : Swift.String]
+  public init(baseURL: Foundation.URL, headers: [Swift.String : Swift.String] = [:], queryParameters: [Swift.String : Swift.String] = [:])
+}
+final public class DefaultNetworkService {
+  public init(config: CGNetworking.NetworkConfigurable, sessionManager: CGNetworking.NetworkSessionManager = DefaultNetworkSessionManager(), logger: CGNetworking.NetworkErrorLogger = DefaultNetworkErrorLogger())
+  @objc deinit
+}
+extension CGNetworking.DefaultNetworkService : CGNetworking.NetworkService {
+  final public func request(endpoint: CGNetworking.Requestable, completion: @escaping CGNetworking.DefaultNetworkService.CompletionHandler) -> CGNetworking.NetworkCancellable?
+  final public func multipartRequest(endpoint: CGNetworking.Requestable, completion: @escaping CGNetworking.DefaultNetworkService.CompletionHandler) -> CGNetworking.NetworkCancellable?
+}
+public class DefaultNetworkSessionManager : CGNetworking.NetworkSessionManager {
+  public init()
+  public func request(_ request: Foundation.URLRequest, completion: @escaping CGNetworking.DefaultNetworkSessionManager.CompletionHandler) -> CGNetworking.NetworkCancellable
+  public func multipartRequest(_ request: Foundation.URLRequest, completion: @escaping CGNetworking.DefaultNetworkSessionManager.CompletionHandler) -> CGNetworking.NetworkCancellable
+  @objc deinit
+}
+public protocol NetworkCancellable {
+  func cancel()
+}
+extension Foundation.URLSessionTask : CGNetworking.NetworkCancellable {
+}
+public protocol NetworkService {
+  typealias CompletionHandler = (Swift.Result<Foundation.Data?, CGNetworking.NetworkError>) -> Swift.Void
+  func request(endpoint: CGNetworking.Requestable, completion: @escaping Self.CompletionHandler) -> CGNetworking.NetworkCancellable?
+  func multipartRequest(endpoint: CGNetworking.Requestable, completion: @escaping Self.CompletionHandler) -> CGNetworking.NetworkCancellable?
+}
+public protocol NetworkSessionManager {
+  typealias CompletionHandler = (Foundation.Data?, Foundation.URLResponse?, Swift.Error?) -> Swift.Void
+  func request(_ request: Foundation.URLRequest, completion: @escaping Self.CompletionHandler) -> CGNetworking.NetworkCancellable
+  func multipartRequest(_ request: Foundation.URLRequest, completion: @escaping Self.CompletionHandler) -> CGNetworking.NetworkCancellable
+}
+extension CGNetworking.NetworkErrorResponseCodes : Swift.Equatable {}
+extension CGNetworking.NetworkErrorResponseCodes : Swift.Hashable {}
+extension CGNetworking.NetworkErrorResponseCodes : Swift.RawRepresentable {}
+extension CGNetworking.HTTPMethodType : Swift.Equatable {}
+extension CGNetworking.HTTPMethodType : Swift.Hashable {}
+extension CGNetworking.HTTPMethodType : Swift.RawRepresentable {}
+extension CGNetworking.BodyEncoding : Swift.Equatable {}
+extension CGNetworking.BodyEncoding : Swift.Hashable {}
